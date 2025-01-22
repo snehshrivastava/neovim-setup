@@ -40,8 +40,8 @@ map("n", "<leader><Down>", "<C-w>j")
 -- map("n", "<C-Down>", "<C-w>-")
 
 -- Telescope
-map("n", "<leader>p", "<CMD>Telescope find_files<CR>", { desc = "Fuzzy find files in cwd" })
-map("n", "<leader>f", "<CMD>Telescope live_grep<CR>", { desc = "Find string in cwd" })
+-- map("n", "<leader>p", "<CMD>Telescope find_files<CR>", { desc = "Fuzzy find files in cwd" })
+-- map("n", "<leader>f", "<CMD>Telescope live_grep<CR>", { desc = "Find string in cwd" })
 map("n", "<leader>fb", "<CMD>Telescope buffers<CR>", { desc = "Fuzzy find opened files" })
 map("n", "<leader>gs", "<CMD>Telescope git_status<CR>", { desc = "Show git file diffs" })
 map("n", "<leader>gc", "<CMD>Telescope git_commits<CR>", { desc = "Browse git commits" })
@@ -62,3 +62,9 @@ end)
 vim.keymap.set("n", "<leader>i", function()
 	require("sneh.lsp").toggleInlayHints()
 end)
+
+-- custom
+local builtin = require('telescope.builtin')
+
+vim.keymap.set('n', '<leader>p', builtin.find_files, {desc = "Fuzzy find files in cwd"})
+vim.keymap.set('n', '<leader>f', builtin.live_grep, {desc = "Find string in cwd"})
