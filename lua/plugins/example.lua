@@ -10,15 +10,15 @@
 -- * override the configuration of LazyVim plugins
 return {
   -- add gruvbox
-  { "ellisonleao/gruvbox.nvim" },
+--   { "ellisonleao/gruvbox.nvim" },
 
-  -- Configure LazyVim to load gruvbox
-  {
-    "LazyVim/LazyVim",
-    opts = {
-      colorscheme = "gruvbox",
-    },
-  },
+--   -- Configure LazyVim to load gruvbox
+--   {
+--     "LazyVim/LazyVim",
+--     opts = {
+--       colorscheme = "gruvbox",
+--     },
+--   },
 
   -- override nvim-cmp and add cmp-emoji
   {
