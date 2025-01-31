@@ -13,6 +13,34 @@ return {
 	dependencies = {
 		-- Creates a beautiful debugger UI
 		"rcarriga/nvim-dap-ui",
+		{
+			"williamboman/mason.nvim",
+			opts = { ensure_installed = { "java-debug-adapter", "java-test", "js-debug-adapter" } },
+		},
+        {
+            "mfussenegger/nvim-dap",
+            optional = true,
+            opts = function()
+              -- Simple configuration to attach to remote java debug process
+              -- Taken directly from https://github.com/mfussenegger/nvim-dap/wiki/Java
+              local dap = require("dap")
+              dap.configurations.java = {
+                {
+                  type = "java",
+                  request = "attach",
+                  name = "Debug (Attach) - Remote",
+                  hostName = "127.0.0.1",
+                  port = 5005,
+                },
+              }
+            end,
+            dependencies = {
+              {
+                "williamboman/mason.nvim",
+                opts = { ensure_installed = { "java-debug-adapter", "java-test" } },
+              },
+            },
+          },
 
 		-- Required dependency for nvim-dap-ui
 		"nvim-neotest/nvim-nio",
@@ -80,6 +108,116 @@ return {
 	config = function()
 		local dap = require("dap")
 		local dapui = require("dapui")
+		-- -----------------------------------
+
+        dap.adapters.java = function(callback)
+            vim.lsp.buf.execute_command({
+                command = "vscode.java.startDebugSession"
+            }) -- not sure how to get the port from this command
+            callback({
+                type = "server";
+                host = "127.0.0.1";
+                port = 5005;
+            })
+        end
+          dap.configurations.java = {
+            {
+              type = 'java',
+              name = 'Debug (Attach)',
+              request = 'attach',
+              hostName = '127.0.0.1',
+              port = 5005,
+            },
+          }
+       
+        local custom_adapter = 'pwa-node-custom'
+        dap.adapters[custom_adapter] = function(cb, config)
+            if config.preLaunchTask then
+                local async = require('plenary.async')
+                local notify = require('notify').async
+
+                async.run(function()
+                    ---@diagnostic disable-next-line: missing-parameter
+                    notify('Running [' .. config.preLaunchTask .. ']').events.close()
+                end, function()
+                    vim.fn.system(config.preLaunchTask)
+                    config.type = 'pwa-node'
+                    dap.run(config)
+                end)
+            end
+        end
+
+        -- language config
+        for _, language in ipairs({ 'typescript', 'javascript' }) do
+            dap.configurations[language] = {
+                {
+                    name = 'Launch',
+                    type = 'pwa-node',
+                    request = 'launch',
+                    program = '${file}',
+                    rootPath = '${workspaceFolder}',
+                    cwd = '${workspaceFolder}',
+                    sourceMaps = true,
+                    skipFiles = { '<node_internals>/**' },
+                    protocol = 'inspector',
+                    console = 'integratedTerminal',
+                },
+                {
+                    name = 'Attach to node process',
+                    type = 'pwa-node',
+                    request = 'attach',
+                    rootPath = '${workspaceFolder}',
+                    processId = require('dap.utils').pick_process,
+                },
+                {
+                    name = 'Debug Main Process (Electron)',
+                    type = 'pwa-node',
+                    request = 'launch',
+                    program = '${workspaceFolder}/node_modules/.bin/electron',
+                    args = {
+                        '${workspaceFolder}/dist/index.js',
+                    },
+                    outFiles = {
+                        '${workspaceFolder}/dist/*.js',
+                    },
+                    resolveSourceMapLocations = {
+                        '${workspaceFolder}/dist/**/*.js',
+                        '${workspaceFolder}/dist/*.js',
+                    },
+                    rootPath = '${workspaceFolder}',
+                    cwd = '${workspaceFolder}',
+                    sourceMaps = true,
+                    skipFiles = { '<node_internals>/**' },
+                    protocol = 'inspector',
+                    console = 'integratedTerminal',
+                },
+                {
+                    name = 'Compile & Debug Main Process (Electron)',
+                    type = custom_adapter,
+                    request = 'launch',
+                    preLaunchTask = 'npm run build-ts',
+                    program = '${workspaceFolder}/node_modules/.bin/electron',
+                    args = {
+                        '${workspaceFolder}/dist/index.js',
+                    },
+                    outFiles = {
+                        '${workspaceFolder}/dist/*.js',
+                    },
+                    resolveSourceMapLocations = {
+                        '${workspaceFolder}/dist/**/*.js',
+                        '${workspaceFolder}/dist/*.js',
+                    },
+                    rootPath = '${workspaceFolder}',
+                    cwd = '${workspaceFolder}',
+                    sourceMaps = true,
+                    skipFiles = { '<node_internals>/**' },
+                    protocol = 'inspector',
+                    console = 'integratedTerminal',
+                },
+            }
+        end
+
+		---------------------------------
 
 		-- Set up the Python adapter and configuration for nvim-dap
 		dap.adapters.python = function(cb, config)
@@ -194,4 +332,3 @@ return {
 		})
 	end,
 }
-
